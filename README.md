@@ -9,6 +9,13 @@ This plugin works by creating a Custom Post Type for each "Location", and associ
 - Allows CPT to be used as a Location Finder, including support for browser GeoLocation and Zip Code location
 
 # Version History
+0.2.2
+---
+Created back-end to save settings.
+- Removed GTU_L_Settings()
+- Removed $GLOBALS['GTU_L']->Settings
+- GTU_L_location_post_type() now initializes $GLOBALS['GTU_L']
+
 0.2.1
 ---
 Fixed an issue where Geolocation replaced session data in some instances. When geolocation was turned off, locations could not be manually loaded.
