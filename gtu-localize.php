@@ -28,19 +28,31 @@ function GTU_L_Update_Settings(){
 
 	update_site_option('GTU_L_Settings_PhoneIcon',$_POST['GTU_L_Settings_PhoneIcon']);
 	
-	// Option Settings
-	if(isset($_POST['GTU_L_Settings_Geolocation'])) { update_site_option('GTU_L_Settings_Geolocation',true); }
-	else { update_site_option('GTU_L_Settings_Geolocation',false); }
+	{ // Geolocation Settings
+		if(isset($_POST['GTU_L_Settings_Geolocation'])) { update_site_option('GTU_L_Settings_Geolocation',true); }
+		else { update_site_option('GTU_L_Settings_Geolocation',false); }
 
+		update_site_option('GTU_L_Settings_Geolocation_Prefix',$_POST['GTU_L_Settings_Geolocation_Prefix']);
+		update_site_option('GTU_L_Settings_Geolocation_Fields',$_POST['GTU_L_Settings_Geolocation_Fields']);
+		if(isset($_POST['GTU_L_Settings_Geolocation_Localize_HREFs'])) { update_site_option('GTU_L_Settings_Geolocation_Localize_HREFs',true); }
+		else { update_site_option('GTU_L_Settings_Geolocation_Localize_HREFs',false); }
+		
+		update_site_option('GTU_L_Settings_Geolocation_Scripts',$_POST['GTU_L_Settings_Geolocation_Scripts']);
+	}
+	
+	{ // SLP Settings
+		if(isset($_POST['GTU_L_Settings_SLP'])) { update_site_option('GTU_L_Settings_SLP',true); }
+		else { update_site_option('GTU_L_Settings_SLP',false); }
+	}
+	
 	wp_redirect(admin_url('network/settings.php?page=gtu-l-settings'));
 	exit;  
 } add_action('admin_post_update_my_settings',  'GTU_L_Update_Settings');
-
 function GTU_L_Location_Post_Type() {
 	if(get_site_option('GTU_L_Settings_Display')) {
 		$Display = get_site_option('GTU_L_Settings_Display');
 		$Displays = $Display . 's';
-		$Lower = sanitize_title($Display);
+		$Lower = get_site_option('GTU_L_Settings_Lower');
 		$Lowers = $Lower . 's';
 		$Icon = get_site_option('GTU_L_Settings_Icon');
 		$GLOBALS['GTU_L'] = new stdClass();
@@ -128,50 +140,25 @@ function GTU_L_DetectLocation() { // This does most of the work for this plugin.
 	$Posts = get_posts(array('post_type' => get_site_option('GTU_L_Settings_Lower'), 'numberposts' => 999));
 	foreach($Posts as $Post) {
 		// set Local post
-		if($Post->post_name == $Root) { 
-			$GLOBALS['GTU_L']->Local = $Post;
-
-			$GLOBALS['GTU_L']->Local->Latitude = get_field('latitude', GTU_L_GetSubdomain_ID());
-			$GLOBALS['GTU_L']->Local->Longitude = get_field('longitude', GTU_L_GetSubdomain_ID());
-			$GLOBALS['GTU_L']->Local->BranchID = get_field('branchid', GTU_L_GetSubdomain_ID());
-			$GLOBALS['GTU_L']->Local->Savvy = get_field('savvy_sliders', GTU_L_GetSubdomain_ID());
-		}
+		if($Post->post_name == $Root) { $GLOBALS['GTU_L']->Local = $Post; }
 		// set Corporate post
-		if($Post->post_name == get_site_option('GTU_L_Settings_Corporate')) {
-// This is the only piece of code that uses PHP Session Variables. This was removed in 0.2.1. I don't believe this is related to the non-location issue, however it's a loose end.
-//			if($_SESSION && !($_SESSION['GTU_L'])) { $_SESSION['GTU_L'] = new stdClass(); }
-//			else {
-//				if($_SESSION && !($_SESSION['GTU_L']->Corporate)) { $_SESSION['GTU_L']->Corporate = new stdClass(); }
-//				else {
-//					$_SESSION['GTU_L'] = new stdClass();
-//					$_SESSION['GTU_L']->Corporate = new stdClass();
-//				}
-//			}
-
-			$GLOBALS['GTU_L']->Corporate = $Post;
-		}
+		if($Post->post_name == get_site_option('GTU_L_Settings_Corporate')) { $GLOBALS['GTU_L']->Corporate = $Post; }
 	}
-	foreach($Posts as $Post) { //  Send ACF values to JS.
-		$ACF = get_fields($Post->ID);
-		$ThisObj = new stdClass();
-		if($ACF) {
-			foreach($ACF as $Key => $Val) { $ThisObj->$Key = $Val; }
-			$Post->ACF = $ThisObj;
-		}
-	}
-
+	
 	// Add Featured Image to Post data (for later use in JS)
-	foreach($Posts as $Post) { $Post->FeaturedImage = get_the_post_thumbnail_url($Post->ID); }	
+	//	Removed in 0.3.0 - This should be available via JS
+	//	foreach($Posts as $Post) { $Post->FeaturedImage = get_the_post_thumbnail_url($Post->ID); }	
 	
 	$GLOBALS['GTU_L']->Posts = $Posts; // This dumps Posts into the Global, which exposes them to JS later.
-	if($GLOBALS['GTU_L']->Local === null) {$GLOBALS['GTU_L']->Local = $GLOBALS['GTU_L']->Corporate;}
+// Disabled in 0.3.0; "GTU_L.Local" is now what triggers GTU_L_Geolocate.
+//	if($GLOBALS['GTU_L']->Local === null) {$GLOBALS['GTU_L']->Local = $GLOBALS['GTU_L']->Corporate;}
 	
 	// Send GTU_L to JavaScript
-	$Encoded = json_encode(json_encode($GLOBALS['GTU_L'], JSON_HEX_TAG));
-	$SendToJS = '<script>var GTU_L = JSON.parse('.$Encoded.');</script>';
-	echo $SendToJS;
+	//	Disabled in 0.3.0. This caused all post data to be exposed in source. Instead, we're using wp_localize_script in GTU_L_JS_Posts()
+	//	$Encoded = json_encode(json_encode($GLOBALS['GTU_L'], JSON_HEX_TAG));
+	//	$SendToJS = '<script>var GTU_L = JSON.parse('.$Encoded.');</script>';
+	//	echo $SendToJS;
 		
-//	Test($GLOBALS['GTU_L']->Local);
 } add_action( 'get_header', 'GTU_L_DetectLocation', 0 );
 
 // Not sure if this works correctly. The idea was to make the plugin host it's own local template, then make it work by default. This is taking too long, so I'm doing it the 0.2.1 way.
@@ -188,6 +175,7 @@ function GTU_L_DetectLocation() { // This does most of the work for this plugin.
 //    return $single;
 //} add_filter('single_template', 'GTU_L_Location_Template');
 
+function GTU_L_SLP() { if(get_site_option('GTU_L_Settings_SLP')) { include_once('gtu_slp.php'); } } add_action( 'init', 'GTU_L_SLP', 0 );
 function GTU_L_Geolocation_Init() { if(get_site_option('GTU_L_Settings_Geolocation')) { include_once('geolocation/gtu_l_geolocate.php'); } } add_action( 'init', 'GTU_L_Geolocation_Init', 0 );
 function GTU_L_Tools() { include_once('tools/gtu_l_tools.php'); } add_action( 'after_setup_theme', 'GTU_L_Tools', 0 );
 
