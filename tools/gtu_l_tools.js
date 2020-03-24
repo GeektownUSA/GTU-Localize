@@ -1,3 +1,5 @@
+GTU_L_Settings = JSON.parse(GTU_L_Settings);
+
 function GTU_L_FormAutofillLocation(FieldID) { // On all forms specified, autofill the "Location" field with GTU_L.Local
 	var FormID = GTU_L_Find_GFID();
 	var DropdownID = 'input_'+FormID+'_' +FieldID;
@@ -37,6 +39,9 @@ function GTU_L_GetURLVariable(variable) { // Returns URL Variable
        return(false);
 }
 function GTU_L_FormatPhone(InputPhone) { return ( '(' +InputPhone.substr(0,3)+ ') ' +InputPhone.substr(3,3)+ '-' +InputPhone.substr(6,4)); }
-function GTU_L_Phone(Phone,DisplayText=['',''],Classes='') { // Prints Phone Buttons button using Location's "Address Phone" link.
+function GTU_L_DisplayPhoneLink(Phone,DisplayText=['',''],Classes='') { // Prints Phone Buttons button using Location's "Address Phone" link.
 	return ('<a href="tel:' +Phone+ '" class="' +Classes+ '">' +DisplayText[0]+ ' ' +GTU_L_FormatPhone(Phone)+ ' ' +DisplayText[1]+ '</a>');
 }
+
+function Test(output) { console.log('GTU Test: ' + JSON.stringify(output)); }
+

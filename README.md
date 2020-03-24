@@ -32,7 +32,6 @@ GTU_L_Geolocate.js was rebuilt
 - GTU_L_LocalizeHREFs() (if enabled) will find all classes matching "gtu_localize_href" and localize that link.
 - Additional Scripts can be entered as comma-seperated strings, ie "OneFunctionHere,AnotherFunctionThere". Scripts will be called after geolocation is complete.
 Added framework for save/update Locations to update Store Locator Plus CSV's
-
 0.2.1
 ---
 Fixed an issue where Geolocation replaced session data in some instances. When geolocation was turned off, locations could not be manually loaded.

@@ -1,187 +1,124 @@
-var Stores = GTU_L.Posts;
-
-function GTU_L_Geolocate() {  //finds the users location, then runs GTU_L_NearestStore();
-	var locator = document.getElementById('locator');
+function GTU_L_Geolocate() {  //finds the users location, then runs GTU_L_NearestLocation();
+	function success(position) { // Do something on success
+		GTU_L_NearestLocation(position.coords.latitude, position.coords.longitude); }
+	function error() { // Do something on error
+	}
 	
-	setTimeout(function() { // Slight delay so you can "see the button working"
-		function success(position) { GTU_L_NearestStore(position.coords.latitude, position.coords.longitude); }
-		function error() {
-			// if(locator) { locator.innerHTML = 'Unable to retrieve your location'; }
-		}
-
-		if (!navigator.geolocation) { if(locator) { locator.innerHTML = 'Geolocation is not supported by your browser'; } }
-		else {
-//			if(locator) { locator.innerHTML = 'Loading...'; }
-			navigator.geolocation.getCurrentPosition(success, error);
-		}
-	}, 100);
+	if (!navigator.geolocation) { // Do if Geolocation is turned off
+	}
+	else { // Run geolocation
+		navigator.geolocation.getCurrentPosition(success, error);
+	}
 }
-function GTU_L_NearestStore(UserLat, UserLng) {  //compares user's location to allstores.js
+function GTU_L_NearestLocation(UserLat, UserLng) {  //compares user's location to allGTU_L_Locations.js
+	// Drop "Corporate" from the list
+	for(var x in GTU_L_Locations) {
+		if(GTU_L_Locations[x].post_name == GTU_L_Settings['GTU_L_Settings_Corporate']) {
+			GTU_L_Locations.splice(x,1);
+		}
+	}
+	
 	function vectorDistance(dx, dy) { return Math.sqrt(dx * dx + dy * dy); }
-	for(var x in Stores) {
-		if(Stores[0].ACF) {
-			Stores[x].distance = vectorDistance(UserLat-Stores[x].ACF.latitude,UserLng-Stores[x].ACF.longitude);
+	for(var x in GTU_L_Locations) {
+		if(GTU_L_Locations[x].ACF) {
+			GTU_L_Locations[x].distance = vectorDistance(UserLat-GTU_L_Locations[x].ACF.latitude,UserLng-GTU_L_Locations[x].ACF.longitude);
 		}
 		else {
-			Stores[x].distance = vectorDistance(UserLat-Stores[x].Latitude,UserLng-Stores[x].Longitude)
+			GTU_L_Locations[x].distance = vectorDistance(UserLat-GTU_L_Locations[x].Latitude,UserLng-GTU_L_Locations[x].Longitude)
 		}
-		Stores[x].distance *= 69;
+		GTU_L_Locations[x].distance *= 69;
 	}	
+
 	function compare( a, b ) {
 		if ( a.distance < b.distance ){ return -1; }
 		if ( a.distance > b.distance ){ return 1; }
 		return 0;
 	}
-	Stores.sort(compare);
+	GTU_L_Locations.sort(compare);
 	
 	// Assign the location to GTU_L.Local
-	GTU_L.Local = GTU_L.Posts[0];
-	// Drop "Corporate" from the list
-	for(var x in Stores) {
-		if(Stores[x].post_title.toLowerCase() == 'corporate') {
-			Stores.splice(x,1);
-		}
-	}
-	
-	// Draw Results
-	GTU_L_DrawStoreList();
+	//	GTU_L.Local = GTU_L.Posts[0];
+
+	// Perform Functions after being Localized
+	GTU_L_LocalizedFunctions();
 }
-function GTU_L_DrawStoreList() {  //draws store list in formatted html
-	var ThisText = '';
-	var Rule = GTU_L_GetURLVariable('ve');
-	if(Rule!=false) {Rule = '?ve=' + Rule;}
-	else {Rule = '';}
+function GTU_L_LocalizedFunctions() {  //draws store list in formatted html
+	GTU_L_UpdatePrefixedIDs();
+	GTU_L_LocalizeHREFs();
 	
-	var locator = document.getElementById("locator");
-	var NearestStore = document.getElementById("NearestStore");
+	// Additional Scripts
+	if(GTU_L_Settings.GTU_L_Settings_Geolocation_Scripts) {
+		var Scripts = GTU_L_Settings.GTU_L_Settings_Geolocation_Scripts.split(',');
+		for(var s in Scripts) { eval(Scripts[s]+'()'); }
+	}
+}
+function GTU_L_UpdatePrefixedIDs() { // Updates a div with localized content
+	var Prefix = GTU_L_Settings.GTU_L_Settings_Geolocation_Prefix;
+	if(Prefix) {
+		var Post = GTU_L_Locations[0];
+		var Fields = GTU_L_Settings.GTU_L_Settings_Geolocation_Fields.split(',');
+		for(var f in Fields) {
+			GTU_L_UpdatePrefixedIDs_Items(Post,Prefix,Fields[f],Post.ACF[Fields[f]]);
+		}
+		if(document.getElementById(Prefix)) { document.getElementById(Prefix).style.display = 'block'; }
+	}
+	//
+	document.getElementsByClassName('localized-show')[0].style.display = 'block';	
+	//
+}
+function GTU_L_UpdatePrefixedIDs_Items(Post, Prefix, Field, Value) {
+//	Update innerHTML
+	var TheseDivs = document.getElementsByClassName(Prefix+'-'+Field);	
+	for(var Div in TheseDivs) {
+		if(Field == 'title') { TheseDivs[Div].innerHTML = Post.post_title; }
+		else if(Field == 'phone') {
+			TheseDivs[Div].innerHTML = GTU_L_FormatPhone(Value);
 
-// This was removed in 0.2.1. I believe this is the cause of the non-location bug.
-// Looks like this was added to all access to BranchID after geolocation was used. Creating an alternative method instead.
-// GTU_VE.BranchID = Stores[0].branchid;
-
-	if(locator) {
-		var StoreLimit = 100;
-		
-		for(var x in Stores) { // Assign HTML to ThisText... 
-			var Store = Stores[x].ACF;
-			if(Store.gmb != null) {Store.gmblink = ['<a href="' +Store.gmb+ '">','</a>'];} else {Store.gmblink = ['',''];}
-			if(Store.savvy_sliders) { var SavvySliders = '<a href="https://'+window.location.hostname+'/'+Stores[x].post_name+'"><img class="w-25 pl-2 pr-4 pb-1" src="https://'+window.location.hostname+'/wp-content/themes/happys-theme/images/savvy2.png"></a>' }
-			else { var SavvySliders = ''; }
-
-			if(x<StoreLimit) {
-				ThisText += '<div class="row py-3 divider-horiz justify-content-center no-gutters">';
-					// Left Part
-					ThisText += '<div class="d-none d-lg-block col-lg-3 pr-3 pr-lg-0">';
-						ThisText += '<a href="https://'+window.location.hostname+'/' +Stores[x].post_name+ '">';
-							if(Stores[x].FeaturedImage != '') { ThisText += '<img class="w-100" src="' +Stores[x].FeaturedImage+ '"></a>' }
-							else { ThisText += '<img class="w-75 p-4" src="/wp-content/themes/happys-theme/images/hp_mascot_thumbsup.png"></a>' }
-						ThisText += '<a class="w-100 btn btn-sm bg-gradient" href="' +Store.gmb+ '"><i class=" fas fa-map-marked-alt" aria-hidden="true"></i> Get Directions' +Store.gmblink[1]+ '</a>';
-					ThisText += '</div>';
-
-					// Middle Part
-					ThisText += '<div class="col-12 col-lg-4 row text-left pl-lg-5 pt-2 pt-lg-0 no-gutters">';
-						ThisText += '<h3 class="mb-0 text-center text-lg-left w-100 pb-2 pb-lg-0">'+Store.name+SavvySliders+'</h3>';
-						// Address Block
-						ThisText += '<div class="col-7 col-lg-12">';
-							ThisText += Store.street+'<br>';
-							ThisText += Store.city+ ', ' +Store.state+ ' ' +Store.zip;
-							ThisText += GTU_L_Phone(Store.phone, ['<i class="fas fa-phone" aria-hidden="true"></i> ',''],'clearfix my-2 d-lg-none', 'fas fa-phone');
-						ThisText += '</div>';
-						// "X Miles Away", View Store Page, View Hours
-						ThisText += '<div class="col-5 my-lg-3">';
-							if(Stores[x].distance) { ThisText += (Math.round(Stores[x].distance * 10, 5))/10+ ' Miles away!<br>'; }
-							else { ThisText+= '<br>'; }
-							
-							ThisText += '<a href="https://'+window.location.hostname+'/' +Stores[x].post_name+Rule+ '"><i class="fas fa-building"></i> View Store Page</a><br>';
-							ThisText += '<a href="https://'+window.location.hostname+'/' +Stores[x].post_name+ '"><i class="fas fa-clock"></i> View hours</a>';
-						ThisText += '</div>';
-					ThisText += '</div>';
-
-					// Right Part
-					ThisText += '<div class="col-lg-4">';
-						ThisText += '<div class="">';
-							ThisText += '';
-						ThisText += '</div>';
-						ThisText += '<div class="row justify-content-between no-gutters">';
-							// "Open Till..." logic
-							var d = new Date();
-							var Today = d.getDay();
-
-							var Hours = [];
-							Hours[0] = Store.sun_close;
-							Hours[1] = Store.mon_close;
-							Hours[2] = Store.tue_close;
-							Hours[3] = Store.wed_close;
-							Hours[4] = Store.thu_close;
-							Hours[5] = Store.fri_close;
-							Hours[6] = Store.sat_close;
-
-							if(Hours[Today]) { // If it's open, tell people
-								if(Hours[Today].split(':')[0] == 0) { Hours[Today] = 12 + ':' +Hours[Today].split(':')[1]+ 'am'; }
-								else if(Hours[Today].split(':')[0] > 12) { Hours[Today] = (Hours[Today].split(':')[0] - 12)+ ':' +Hours[Today].split(':')[1]+ 'pm'; }
-								else { Hours[Today] = Hours[Today]+ 'am'; }
-
-								ThisText += '<h3 class="col-12 text-center mb-3 d-none d-lg-block">Open today until '+Hours[Today]+'!</h3>';
-							}
-							else { // If it's close, tell them something else
-								ThisText += '<h3 class="col-12 text-center mb-3 d-none d-lg-block">&nbsp;</h3>';
-							}
-							ThisText += '<a class="col-5 my-2 btn btn-md bg-gradient" href="javascript:GTU_VE_Link_Force(\'pickup\',\''+Store.branchid+'\');">Pickup</a>';
-							ThisText += '<a class="col-5 my-2 btn btn-md bg-gradient" href="javascript:GTU_VE_Link_Force(\'delivery\',\''+Store.branchid+'\');">Delivery</a>';
-							ThisText += GTU_L_Phone(Store.phone, ['<h3><i class="fas fa-phone" aria-hidden="true"></i> ','</h3>'],'col-12 my-2 d-none d-lg-block', 'fas fa-phone');
-						ThisText += '</div>';
-					ThisText += '</div>';
-				ThisText += '</div>';
+			if(document.getElementById(Prefix +'-phone-mobile')) {
+				var MobileDiv = document.getElementById(Prefix +'-phone-mobile');
+				if(MobileDiv.href) { MobileDiv.href = 'tel:' + Value; }
 			}
 		}
-		locator.innerHTML = ThisText;
+		else if(Field == 'gmb_vanity') { /* Do something */ }
+		else if(Field == 'distance') { TheseDivs[Div].innerHTML = Math.round(Post.distance*100)/100; }
+		else { TheseDivs[Div].innerHTML = Value; }
 	}
-	if(NearestStore) {
-		var Store = Stores[0].ACF;
-		if(Store.gmb != null) {Store.gmblink = ['<a href="' +Store.gmb+ '">','</a>'];} else {Store.gmblink = ['',''];}
-		if(Store.savvy_sliders) { var SavvySliders = '<a href="https://'+window.location.hostname+'/'+Stores[1].post_name+'"><img class="w-25 pl-2 pr-4 pb-1" src="https://'+window.location.hostname+'/wp-content/themes/happys-theme/images/savvy2.png"></a>' }
-		else { var SavvySliders = ''; }
-		
-		{ // Draw everything
-			ThisText += '<div class="row">';
-				// Left Side
-				ThisText += '<div class="col-4 justify-content-center">';
-					ThisText += '<a href="https://'+window.location.hostname+'/' +Stores[0].post_name+ '">';
-						if(Stores[0].FeaturedImage != '') { ThisText += '<img class="w-100" src="' +Stores[0].FeaturedImage+ '"></a>' }
-						else { ThisText += '<img class="w-75 p-2" src="/wp-content/themes/happys-theme/images/hp_mascot_thumbsup.png"></a>' }
-					ThisText += '<h6 class="small"><a class="w-100 btn btn-sm hp-bgblack" href="' +Store.gmb+ '" target="_blank"><i class=" fas fa-map-marked-alt" aria-hidden="true"></i> Map It</a></h6>';
-					ThisText += '<div class="hp-distanceaway hp-cherry">NOT YOUR STORE?</div>';
-					ThisText += '<div><a href="/locations/">Select another</a></div>';
-				ThisText += '</div>';
-			
-				// Right Side
-				ThisText += '<div class="col-8">';
-					ThisText += '<h3 class="mb-0 all-caps text-center hp-mdheadline">' +Stores[0].post_title+ ' <span class="hp-distanceaway hp-cherry">' +(Math.round(Stores[0].distance * 10, 5) / 10)+ 'm away</span></h3>';
-					ThisText += '<div class="row mt-0 pt-0">';
-						ThisText += '<div class="col"><a class="my-2 btn btn-sm bg-gradient w-100" href="javascript:GTU_VE_Link_Force(\'pickup\',\''+Store.branchid+'\');">Pickup</a></div>';
-						ThisText += '<div class="col"><a class="my-2 btn btn-sm bg-gradient w-100" href="javascript:GTU_VE_Link_Force(\'delivery\',\''+Store.branchid+'\');">Delivery</a></div>';
-					ThisText += '</div>';
-					ThisText += '<div class="row font-weight-bold mt-2">';
-						ThisText += '<div class="col-lg-auto text-center"><a href="tel:' +Store.phone+ '"><i class="fas fa-phone"></i> ' +GTU_L_FormatPhone(Store.phone)+ '</a></div>';
-						ThisText += '<div class="col-lg-auto text-center"><a href="' +Stores[0].post_name+ '"><i class="fas fa-building" aria-hidden="true"></i> Store Page</a></div>';
-						ThisText += '<div class="col-lg-auto text-center"><a href="https://'+window.location.hostname+'/' +Stores[0].post_name+ '#hours"><i class="fas fa-clock" aria-hidden="true"></i> Hours</a></div>';
-					ThisText += '</div>';
-					ThisText += '<hr class="divider-horiz-thintan my-2"></hr>';
-					ThisText += '<p class="hp-lgtext text-center">' +Store.street+ '<br>' +Store.city+ ', ' +Store.state+ ' ' +Store.zip+ '</p>';
-				ThisText += '</div>';
-			ThisText += '</div>';
+//	Update Links
+	var TheseDivs = document.getElementsByClassName(Prefix+'-'+Field+'-url');	
+	for(var Div in TheseDivs) {
+		var Field_URL = Field+"-url"
+		if(Field_URL == 'title-url') { TheseDivs[Div].href = Post.post_name; }
+		else if(Field_URL == 'phone-url') {
+			TheseDivs[Div].href = 'tel:' + Value;
+//			if(document.getElementsByClassName(Prefix +'-phone-mobile'+'-url')) {
+//				var MobileDiv = document.getElementById(Prefix +'-phone-mobile');
+//				if(MobileDiv.href) { MobileDiv.href = 'tel:' + Value; }
+//			}
 		}
-		NearestStore.innerHTML = ThisText;
+		else if(Field_URL == 'gmb_vanity-url') { TheseDivs[Div].href = Value; }
+		else if(Field_URL == 'distance-url') {  }
+//		else {
+//			if(TheseDivs[Div].href) { TheseDivs[Div].href = Value; }
+//			TheseDivs[Div].innerHTML = Value;
+//		}
 	}
 }
-function GTU_L_Ziplocate() {  //finds the users location via Zip, then runs GTU_L_NearestStore();
+function GTU_L_LocalizeHREFs() {
+	if(GTU_L_Settings.GTU_L_Settings_Geolocation_Localize_HREFs) {
+		var DivsToLocalize = document.getElementsByClassName('gtu_localize_href');
+		for(var d in DivsToLocalize) {
+			if(DivsToLocalize[d].href) { DivsToLocalize[d].href = 'https://' +window.location.host+ '/' +GTU_L_Locations[0].post_name+ DivsToLocalize[d].pathname; }
+		}
+	}
+}
+function GTU_L_Ziplocate() {  //finds the users location via Zip, then runs GTU_L_NearestLocation();
 	var MyZip = document.getElementById('Zip').value;
 	
 	var locator = document.getElementById('locator');
 	if(Zips[MyZip]) {
 		if(locator) { locator.innerHTML = 'Loading...'; }
 		setTimeout(function() { // Slight delay so you can "see the button working"
-			GTU_L_NearestStore(Zips[MyZip][0], Zips[MyZip][1]);
+			GTU_L_NearestLocation(Zips[MyZip][0], Zips[MyZip][1]);
 		}, 100);
 	}
 	else {

@@ -1,6 +1,22 @@
 <?php
+function GTU_L_Settings_JS() {
+	$Settings = array();
+	$GTU_L_Settings = new stdClass;
 
-function GTU_L_Tools_JS_Init() { wp_enqueue_script('gtu_l_tools', plugin_dir_url(__FILE__) . 'gtu_l_tools.js'); } add_action( 'wp_enqueue_scripts', 'GTU_L_Tools_JS_Init', 0 );
+	array_push($Settings, "GTU_L_Settings_Corporate");
+	array_push($Settings, "GTU_L_Settings_Geolocation");
+	array_push($Settings, "GTU_L_Settings_Geolocation_Prefix");
+	array_push($Settings, "GTU_L_Settings_Geolocation_Fields");
+	array_push($Settings, "GTU_L_Settings_Geolocation_Localize_HREFs");
+	array_push($Settings, "GTU_L_Settings_Geolocation_Scripts");
+
+	foreach($Settings as $Key=>$Setting) { $GTU_L_Settings->$Setting = get_site_option($Setting); }
+	wp_register_script( 'GTU_L_Settings', '' );
+	wp_localize_script( 'GTU_L_Settings', 'GTU_L_Settings', json_encode($GTU_L_Settings) );
+	wp_enqueue_script( 'GTU_L_Settings' );
+} add_action('wp_enqueue_scripts','GTU_L_Settings_JS');
+
+function GTU_L_Tools_JS_Init() { wp_enqueue_script('gtu_l_tools', plugin_dir_url(__FILE__) . 'gtu_l_tools.js'); } add_action( 'wp_enqueue_scripts', 'GTU_L_Tools_JS_Init' );
 
 //function GTU_L_FormAutofillLocation_Init() { echo '<script>GTU_L_FormAutofillLocation(29);</script>'; } add_action( 'wp_footer', 'GTU_L_FormAutofillLocation_Init', 0 );
 
