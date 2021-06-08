@@ -1,11 +1,7 @@
 <?php
 
-use threewp_broadcast\ajax\json;
-
 function GTU_L_Settings_JS()
 {
-    global $wpdb;
-
     $Settings = array();
     $GTU_L_Settings = new stdClass;
 
@@ -16,8 +12,7 @@ function GTU_L_Settings_JS()
     array_push($Settings, "GTU_L_Settings_Geolocation_Localize_HREFs");
     array_push($Settings, "GTU_L_Settings_Geolocation_Scripts");
     $arr = implode( ", ", array_map(function($elem){return '"'.$elem.'"';}, $Settings));
-    $row = $wpdb->get_results( $wpdb->prepare( "SELECT meta_value FROM $wpdb->sitemeta WHERE meta_key IN ('$arr') AND site_id = %d", get_current_network_id() ) );
-  
+
     foreach ($Settings as $Key => $Setting) {
         $GTU_L_Settings->$Setting = get_site_option($Setting);
     }
@@ -33,8 +28,6 @@ function GTU_L_Tools_JS_Init()
     wp_enqueue_script('gtu_l_tools', plugin_dir_url(__FILE__) . 'gtu_l_tools.js');
 }
 add_action('wp_enqueue_scripts', 'GTU_L_Tools_JS_Init');
-
-//function GTU_L_FormAutofillLocation_Init() { echo '<script>GTU_L_FormAutofillLocation(29);</script>'; } add_action( 'wp_footer', 'GTU_L_FormAutofillLocation_Init', 0 );
 
 if (!function_exists('Test')) { // PHP script to dump variable into JavaScript console on front-end.
     function Test($output, $with_script_tags = false)
@@ -55,7 +48,7 @@ function get_subdomain_post(){
 
     $args = array('post_type' => $post_type, 'name' => $post_name , 'numberposts' => 1);
     $key = sanitize_key(json_encode($args));
-    
+
     $post = get_transient($key);
 
     if(!$post){
@@ -69,8 +62,8 @@ function get_subdomain_post(){
 function load_gtu_posts(){
     $post_type = get_site_option('GTU_L_Settings_Lower');
     $args = array('post_type' => $post_type, 'numberposts' => -1);
-        
-    set_gtu_field('location_posts', get_posts($args));    
+
+    set_gtu_field('location_posts', get_posts($args));
 }
 
 add_action("gtu/load_posts", 'load_gtu_posts', 1);
@@ -85,7 +78,7 @@ function set_gtu_field(string $filed_name, $value){
 
 function GTU_L_GetSubdomain_ID()
 {   // Gets the Post ID (by blog details / post name) of the currently active location.
-    $post = get_subdomain_post();   
+    $post = get_subdomain_post();
     return isset($post) ? $post->ID : null;
 }
 function GTU_L_GetParent_ID()
