@@ -32,7 +32,12 @@ GTU_L_Geolocate.js was rebuilt
 - GTU_L_LocalizeHREFs() (if enabled) will find all classes matching "gtu_localize_href" and localize that link.
 - Additional Scripts can be entered as comma-seperated strings, ie "OneFunctionHere,AnotherFunctionThere". Scripts will be called after geolocation is complete.
 Added framework for save/update Locations to update Store Locator Plus CSV's
-
+Added GTU_L_LocalPrefix / GTU_L_GetLocalPrefix to output / return the prefix for localized links.
+GTU_L_GetSubdomain_ID() now looks to get_blog_details / post_name to determine a match.
+Added "Edit [Location CPT]" link to all pages when a Subdirectory is active. When on the parent directory, the corporate location is edited. (This feature breaks (and is disabled) on admin pages).
+Created system for "Local Business" schema
+- Created "Localization Settings" options
+- JSON-LD is output in the header for any page where the function is displayed
 0.2.1
 ---
 Fixed an issue where Geolocation replaced session data in some instances. When geolocation was turned off, locations could not be manually loaded.

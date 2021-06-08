@@ -7,6 +7,7 @@ $options = get_site_option('gtu_localize');
 <style>
 	.GTU_L_Settings_Row { padding: 5px 25px; clear: both; }
 	.GTU_L_Settings_Label { font-weight: 700; }
+	.GTU_L_Settings_Item { padding-right: 1%; float: left; text-align: center; }
 </style>
 
 <div>
@@ -28,6 +29,7 @@ $options = get_site_option('gtu_localize');
 				<input type="text" id="GTU_L_Settings_Corporate" name="GTU_L_Settings_Corporate" placeholder="corporate" value="<?php echo get_site_option('GTU_L_Settings_Corporate'); ?>" />
 			</div>
 		</div>
+
 		<div style="padding-top:50px;">
 			<h2>Geolocation Settings</h2>
 			<div class="GTU_L_Settings_Row">
@@ -53,13 +55,36 @@ $options = get_site_option('gtu_localize');
 				<input type="text" id="GTU_L_Settings_Geolocation_Scripts" name="GTU_L_Settings_Geolocation_Scripts" placeholder="Location" value="<?php echo get_site_option('GTU_L_Settings_Geolocation_Scripts'); ?>" style="width: 50%;" />
 			</div>
 		</div>
+
 		<div style="padding-top:50px;">
-			<h2>Store Locator Plus Settings</h2>
+			<h2>Social Settings</h2>
+			<div class="GTU_L_Settings_Row">
+				<div class="GTU_L_Settings_Label GTU_L_Settings_Item">Allow Facebook<br><input type="checkbox" id="GTU_L_Settings_Social_Facebook" name="GTU_L_Settings_Social_Facebook" <?php if(get_site_option('GTU_L_Settings_Social_Facebook')=='1') {echo "checked";} ?> /></div>
+				<div class="GTU_L_Settings_Label GTU_L_Settings_Item">Allow Instagram<br><input type="checkbox" id="GTU_L_Settings_Social_Instagram" name="GTU_L_Settings_Social_Instagram" <?php if(get_site_option('GTU_L_Settings_Social_Instagram')=='1') {echo "checked";} ?> /></div>
+				<div class="GTU_L_Settings_Label GTU_L_Settings_Item">Allow Youtube<br><input type="checkbox" id="GTU_L_Settings_Social_Youtube" name="GTU_L_Settings_Social_Youtube" <?php if(get_site_option('GTU_L_Settings_Social_Youtube')=='1') {echo "checked";} ?> /></div>
+				<div class="GTU_L_Settings_Label GTU_L_Settings_Item">Allow Pinterest<br><input type="checkbox" id="GTU_L_Settings_Social_Pinterest" name="GTU_L_Settings_Social_Pinterest" <?php if(get_site_option('GTU_L_Settings_Social_Pinterest')=='1') {echo "checked";} ?> /></div>
+			</div>
+		</div>
+		
+		<div style="padding-top:50px;">
+			<h2>SEO Settings</h2>
+			<div class="GTU_L_Settings_Row">
+				<div class="GTU_L_Settings_Label GTU_L_Settings_Item">Display "Local Business" Schema<br><input type="checkbox" id="GTU_L_Settings_SEO_DisplaySchema" name="GTU_L_Settings_SEO_DisplaySchema" <?php if(get_site_option('GTU_L_Settings_SEO_DisplaySchema')=='1') {echo "checked";} ?> /></div>
+			</div>
+			<div class="GTU_L_Settings_Row">
+				<div class="GTU_L_Settings_Label">What URL is the SEO image located at?</div>
+				<input type="text" style="width:50%;" id="GTU_L_Settings_SEO_Icon" name="GTU_L_Settings_SEO_Icon" value="<?php echo get_site_option('GTU_L_Settings_SEO_Icon'); ?>" />
+			</div>
+		</div>
+
+		<div style="padding-top:50px;">
+			<h2>Store Locator Plus Settings (Beta)</h2>
 			<div class="GTU_L_Settings_Row">
 				<div class="GTU_L_Settings_Label">Allow Locations to auto-update SLP Save File?</div>
 				<input type="checkbox" id="GTU_L_Settings_SLP" name="GTU_L_Settings_SLP" <?php if(get_site_option('GTU_L_Settings_SLP')=='1') {echo "checked";} ?> />
 			</div>
 		</div>
+		
 		<div style="padding-top:50px;">
 			<h2>Display Settings</h2>
 			<div class="GTU_L_Settings_Row">

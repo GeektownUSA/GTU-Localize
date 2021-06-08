@@ -40,6 +40,27 @@ function GTU_L_Update_Settings(){
 		update_site_option('GTU_L_Settings_Geolocation_Scripts',$_POST['GTU_L_Settings_Geolocation_Scripts']);
 	}
 	
+	{ // Social Settings
+		if(isset($_POST['GTU_L_Settings_Social_Facebook'])) { update_site_option('GTU_L_Settings_Social_Facebook',true); }
+		else { update_site_option('GTU_L_Settings_Social_Facebook',false); }
+
+		if(isset($_POST['GTU_L_Settings_Social_Instagram'])) { update_site_option('GTU_L_Settings_Social_Instagram',true); }
+		else { update_site_option('GTU_L_Settings_Social_Instagram',false); }
+
+		if(isset($_POST['GTU_L_Settings_Social_Youtube'])) { update_site_option('GTU_L_Settings_Social_Youtube',true); }
+		else { update_site_option('GTU_L_Settings_Social_Youtube',false); }
+
+		if(isset($_POST['GTU_L_Settings_Social_Pinterest'])) { update_site_option('GTU_L_Settings_Social_Pinterest',true); }
+		else { update_site_option('GTU_L_Settings_Social_Pinterest',false); }
+
+	}
+	
+	{ // SEO Settings
+		if(isset($_POST['GTU_L_Settings_SEO_DisplaySchema'])) { update_site_option('GTU_L_Settings_SEO_DisplaySchema',true); }
+		else { update_site_option('GTU_L_Settings_SEO_DisplaySchema',false); }
+		update_site_option('GTU_L_Settings_SEO_Icon',$_POST['GTU_L_Settings_SEO_Icon']);
+	}
+	
 	{ // SLP Settings
 		if(isset($_POST['GTU_L_Settings_SLP'])) { update_site_option('GTU_L_Settings_SLP',true); }
 		else { update_site_option('GTU_L_Settings_SLP',false); }
@@ -48,6 +69,8 @@ function GTU_L_Update_Settings(){
 	wp_redirect(admin_url('network/settings.php?page=gtu-l-settings'));
 	exit;  
 } add_action('admin_post_update_my_settings',  'GTU_L_Update_Settings');
+
+
 function GTU_L_Location_Post_Type() {
 	if(get_site_option('GTU_L_Settings_Display')) {
 		$Display = get_site_option('GTU_L_Settings_Display');
@@ -116,8 +139,7 @@ function GTU_L_Location_Post_Type() {
 		register_post_type( $Lower, $args );
 		
 		include_once('gtu_acf.php');
-	}
-	else {
+	} else {
 		function GTU_L_Location_Post_Type_ERROR() {
 		// Return an error if Settings has not been initialized after install.
 			?>
@@ -127,37 +149,23 @@ function GTU_L_Location_Post_Type() {
 			<?php
 		} add_action( 'admin_notices', 'GTU_L_Location_Post_Type_ERROR', 0 );
 	}
+
+	if(is_main_site() && !is_admin()) {
+		do_action('gtu/load_posts');
+	}
+	
 } add_action( 'init', 'GTU_L_Location_Post_Type', 0 );
 function GTU_L_DetectLocation() { // This does most of the work for this plugin.
 	$GLOBALS['GTU_L']->Local = '';
-	$Root = array_values(array_filter(explode('/', $_SERVER['REQUEST_URI'])));
-	if(is_array($Root) && $Root != null) {
-		if($Root[0] == get_site_option('GTU_L_Settings_Lower').'s') { $Root = $Root[1]; }
-		else { $Root = $Root[0]; }
+
+	$post= get_subdomain_post();
+	
+	if(is_main_site()) {
+		$GLOBALS['GTU_L']->Corporate = $post;
+	} else {
+		$GLOBALS['GTU_L']->Local = $post;
 	}
-	
-	// Determine local and corporate posts
-	$Posts = get_posts(array('post_type' => get_site_option('GTU_L_Settings_Lower'), 'numberposts' => 999));
-	foreach($Posts as $Post) {
-		// set Local post
-		if($Post->post_name == $Root) { $GLOBALS['GTU_L']->Local = $Post; }
-		// set Corporate post
-		if($Post->post_name == get_site_option('GTU_L_Settings_Corporate')) { $GLOBALS['GTU_L']->Corporate = $Post; }
-	}
-	
-	// Add Featured Image to Post data (for later use in JS)
-	//	Removed in 0.3.0 - This should be available via JS
-	//	foreach($Posts as $Post) { $Post->FeaturedImage = get_the_post_thumbnail_url($Post->ID); }	
-	
-	$GLOBALS['GTU_L']->Posts = $Posts; // This dumps Posts into the Global, which exposes them to JS later.
-// Disabled in 0.3.0; "GTU_L.Local" is now what triggers GTU_L_Geolocate.
-//	if($GLOBALS['GTU_L']->Local === null) {$GLOBALS['GTU_L']->Local = $GLOBALS['GTU_L']->Corporate;}
-	
-	// Send GTU_L to JavaScript
-	//	Disabled in 0.3.0. This caused all post data to be exposed in source. Instead, we're using wp_localize_script in GTU_L_JS_Posts()
-	//	$Encoded = json_encode(json_encode($GLOBALS['GTU_L'], JSON_HEX_TAG));
-	//	$SendToJS = '<script>var GTU_L = JSON.parse('.$Encoded.');</script>';
-	//	echo $SendToJS;
+
 		
 } add_action( 'get_header', 'GTU_L_DetectLocation', 0 );
 
@@ -175,7 +183,7 @@ function GTU_L_DetectLocation() { // This does most of the work for this plugin.
 //    return $single;
 //} add_filter('single_template', 'GTU_L_Location_Template');
 
-function GTU_L_SLP() { if(get_site_option('GTU_L_Settings_SLP')) { include_once('gtu_slp.php'); } } add_action( 'init', 'GTU_L_SLP', 0 );
+function GTU_L_SLP() { if(get_site_option('GTU_L_Settings_SLP')) { include_once('slp/gtu_slp.php'); } } add_action( 'init', 'GTU_L_SLP', 0 );
 function GTU_L_Geolocation_Init() { if(get_site_option('GTU_L_Settings_Geolocation')) { include_once('geolocation/gtu_l_geolocate.php'); } } add_action( 'init', 'GTU_L_Geolocation_Init', 0 );
 function GTU_L_Tools() { include_once('tools/gtu_l_tools.php'); } add_action( 'after_setup_theme', 'GTU_L_Tools', 0 );
 

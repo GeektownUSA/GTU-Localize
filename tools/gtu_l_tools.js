@@ -7,7 +7,7 @@ function GTU_L_FormAutofillLocation(FieldID) { // On all forms specified, autofi
 	
 	if(FormID) {
 		for(var x in Dropdown.options) {
-			if(Dropdown.options[x].value == GTU_L.Local.post_name) {
+			if(Dropdown.options[x].value == GTU_L_Locations[0].post_name) {
 //				Test_VE(Dropdown.options[x].selected);
 				Dropdown.options[x].selected = true;
 				break;
