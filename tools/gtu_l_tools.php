@@ -11,7 +11,6 @@ function GTU_L_Settings_JS()
     array_push($Settings, "GTU_L_Settings_Geolocation_Fields");
     array_push($Settings, "GTU_L_Settings_Geolocation_Localize_HREFs");
     array_push($Settings, "GTU_L_Settings_Geolocation_Scripts");
-    $arr = implode( ", ", array_map(function($elem){return '"'.$elem.'"';}, $Settings));
 
     foreach ($Settings as $Key => $Setting) {
         $GTU_L_Settings->$Setting = get_site_option($Setting);
